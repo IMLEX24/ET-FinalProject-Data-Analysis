@@ -1,17 +1,21 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
+import numpy as np
 import pandas as pd
 from PIL import Image
 
 from .consts import IDTConsts, SMTConsts
-from .draw import plot_fixations, plot_trial, plot_trial_heatmap
+from .draw import plot_fixations, plot_scanpath, plot_trial, plot_trial_heatmap
 from .IDT import detect_fixations as detect_fixations_idt
 from .io import load_data
 from .preprocess import preprocess
 from .SMT import convert_data_into_fixations
 from .SMT import detect_fixations as detect_fixations_smt
+
+AlgoType = Literal["IDT", "SMT"]
 
 
 class Subject:
@@ -89,7 +93,20 @@ class Subject:
         )
         return fixation_df
 
-    def _get_title(self, trial_num: int) -> str:
+    def detect_fixations_smt(self, trial_num: int) -> pd.DataFrame:
+        # detect fixations using SMT
+        df = self.load_data(trial_num)
+        df = df[["elapsed_time_s", "x", "y"]]
+        fixations_labels = detect_fixations_smt(
+            df,
+            smt_consts=self.smt_consts,
+            plot=False,
+        )
+        fixation_df = convert_data_into_fixations(fixations_labels)
+
+        return fixation_df
+
+    def _get_title_base(self, trial_num: int) -> str:
         title = f"Subject: {self.name}, Trial {trial_num}"
         if self.with_timer:
             title += ", with timer"
@@ -100,43 +117,48 @@ class Subject:
     def plot_trial(self, trial_num: int) -> None:
         df = self.load_data(trial_num)
         img = self.load_image(trial_num)
-        title = self._get_title(trial_num)
+        title = self._get_title_base(trial_num)
+        title = f"{title} (Raw)"
         plot_trial(df, img, title)
 
     def plot_trial_heatmap(self, trial_num: int) -> None:
         df = self.load_data(trial_num)
         img = self.load_image(trial_num)
-        title = self._get_title(trial_num)
+        title = self._get_title_base(trial_num)
+        title = f"{title} (Heatmap)"
         plot_trial_heatmap(df, img, title)
 
     def plot_fixations_idt(self, trial_num: int) -> pd.DataFrame:
         img = self.load_image(trial_num)
-        title = self._get_title(trial_num)
+        title = self._get_title_base(trial_num)
         fix_df = self.detect_fixations_idt(trial_num)
         title = f"{title} (IDT)"
         plot_fixations(fix_df, img, title)
         return fix_df
 
-    def detect_fixations_smt(self, trial_num: int) -> pd.DataFrame:
-        # detect fixations using SMT
-        df = self.load_data(trial_num)
-        df = df[["elapsed_time_s", "x", "y"]]
-        fixations_labels = detect_fixations_smt(
-            df,
-            smt_consts=self.smt_consts,
-            plot=False,
-        )
-        # return fixations_labels
-        fixation_df = convert_data_into_fixations(fixations_labels)
-        # mask = fixation_df["duration"] <= 0
-        # fixation_df = fixation_df[~mask]
-
-        return fixation_df
-
-    def plot_fixations_smt(self, trial_num: int) -> pd.DataFrame:
+    def plot_fixations(self, trial_num: int, algorithm: AlgoType) -> pd.DataFrame:
+        if algorithm == "IDT":
+            fix_df = self.detect_fixations_idt(trial_num)
+        elif algorithm == "SMT":
+            fix_df = self.detect_fixations_smt(trial_num)
+        else:
+            raise ValueError(f"Invalid algorithm: {algorithm}")
         img = self.load_image(trial_num)
-        title = self._get_title(trial_num)
-        fix_df = self.detect_fixations_smt(trial_num)
-        title = f"{title} (SMT)"
+        title = self._get_title_base(trial_num)
+        title = "Fixations of " + title + f" ({algorithm})"
         plot_fixations(fix_df, img, title)
+        return fix_df
+
+    def plot_scanpath(self, trial_num: int, algo: AlgoType) -> pd.DataFrame:
+        if algo == "IDT":
+            fix_df = self.detect_fixations_idt(trial_num)
+        elif algo == "SMT":
+            fix_df = self.detect_fixations_smt(trial_num)
+        else:
+            raise ValueError(f"Invalid algorithm: {algo}")
+
+        img = self.load_image(trial_num)
+        title = self._get_title_base(trial_num)
+        title = "Scanpath of " + title + f" ({algo})"
+        plot_scanpath(fix_df, img, title)
         return fix_df
