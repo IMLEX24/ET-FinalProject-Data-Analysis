@@ -5,13 +5,11 @@ from pathlib import Path
 import pandas as pd
 from PIL import Image
 
-from .consts import IDTConsts, SMTConsts
+from .consts import IDTConsts
 from .draw import plot_fixations, plot_trial, plot_trial_heatmap
 from .IDT import detect_fixations as detect_fixations_idt
 from .io import load_data
 from .preprocess import preprocess
-from .SMT import convert_data_into_fixations
-from .SMT import detect_fixations as detect_fixations_smt
 
 
 class Subject:
