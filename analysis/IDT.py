@@ -1,7 +1,14 @@
 import numpy as np
 
+from .consts import IDTConsts
 
-def detect_fixations(points, T_disp, T_dur):  # noqa: ANN001, ANN201, N803, PLR0914
+
+def detect_fixations(
+    points,
+    idt_consts: IDTConsts,
+):
+    T_disp = idt_consts.T_disp
+    T_dur = idt_consts.T_dur
     # Initialize fixation data
     fixations = []
     # initialize the moving window

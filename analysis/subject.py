@@ -5,23 +5,39 @@ from pathlib import Path
 import pandas as pd
 from PIL import Image
 
-from .consts import IDTConsts
+from .consts import IDTConsts, SMTConsts
 from .draw import plot_fixations, plot_trial, plot_trial_heatmap
 from .IDT import detect_fixations as detect_fixations_idt
 from .io import load_data
 from .preprocess import preprocess
+from .SMT import convert_data_into_fixations
+from .SMT import detect_fixations as detect_fixations_smt
 
 
 class Subject:
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self,
+        root: Path,
+        idt_consts: IDTConsts = IDTConsts(),
+        smt_consts: SMTConsts = SMTConsts(),
+    ) -> None:
         self.root = root
-        self.with_timer = root.name.endswith("timer")
+
+        # constants
+        self.idt_consts = idt_consts
+        self.smt_consts = smt_consts
+
+        # load trials order
         path = self.root / "trials_order.txt"
         with path.open(encoding="utf-8") as f:
             trials_order = json.load(f)
         self.trials_order = [0, *trials_order]  # add the first trial
 
+        # load properties from file name
         fname = self.root.name
+
+        self.with_timer = fname.endswith("timer")
+
         self.name = fname.split("_")[1]
 
         timestamp_str = fname.split("_")[2]
@@ -36,9 +52,7 @@ class Subject:
             self.load_data(trial_num)
 
     def __repr__(self) -> str:
-        repr_str = (
-            f"Subject(name={self.name}, timestamp={self.timestamp}, with_timer={self.with_timer})"
-        )
+        repr_str = f"Subject(name={self.name}, timestamp={self.timestamp}, with_timer={self.with_timer})"
         return repr_str
 
     def load_data(self, trial_num: int) -> pd.DataFrame:
@@ -69,11 +83,7 @@ class Subject:
         # detect fixations using IDT
         df = self.load_data(trial_num)
         points = df[["elapsed_time_s", "x", "y"]].values
-        fixations = detect_fixations_idt(
-            points,
-            T_disp=IDTConsts.T_disp,
-            T_dur=IDTConsts.T_dur,
-        )
+        fixations = detect_fixations_idt(points, idt_consts=self.idt_consts)
         fixation_df = pd.DataFrame(
             fixations, columns=["x", "y", "time_start", "time_end", "duration"]
         )
@@ -104,5 +114,29 @@ class Subject:
         title = self._get_title(trial_num)
         fix_df = self.detect_fixations_idt(trial_num)
         title = f"{title} (IDT)"
+        plot_fixations(fix_df, img, title)
+        return fix_df
+
+    def detect_fixations_smt(self, trial_num: int) -> pd.DataFrame:
+        # detect fixations using SMT
+        df = self.load_data(trial_num)
+        df = df[["elapsed_time_s", "x", "y"]]
+        fixations_labels = detect_fixations_smt(
+            df,
+            smt_consts=self.smt_consts,
+            plot=False,
+        )
+        # return fixations_labels
+        fixation_df = convert_data_into_fixations(fixations_labels)
+        # mask = fixation_df["duration"] <= 0
+        # fixation_df = fixation_df[~mask]
+
+        return fixation_df
+
+    def plot_fixations_smt(self, trial_num: int) -> pd.DataFrame:
+        img = self.load_image(trial_num)
+        title = self._get_title(trial_num)
+        fix_df = self.detect_fixations_smt(trial_num)
+        title = f"{title} (SMT)"
         plot_fixations(fix_df, img, title)
         return fix_df
