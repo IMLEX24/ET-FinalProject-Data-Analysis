@@ -52,7 +52,7 @@ def plot_fixations(fix_df: pd.DataFrame, img: Image, title: str) -> None:
     _fig, ax = plt.subplots(tight_layout=True)
     ax.imshow(img)
 
-    sc = ax.scatter(
+    _sc = ax.scatter(
         fix_df["x"],
         fix_df["y"],
         # c=fix_df["time_start"],
@@ -60,7 +60,6 @@ def plot_fixations(fix_df: pd.DataFrame, img: Image, title: str) -> None:
         edgecolors="black",
         s=20,
     )
-    ax.legend(*sc.legend_elements(), title="Elapsed Time (s)")
     ax.set_title(title)
     ax.set_xlabel("X-coordinate")
     ax.set_ylabel("Y-coordinate")
