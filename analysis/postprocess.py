@@ -10,7 +10,7 @@ from .utils import log_ts
 # ----
 
 
-def _get_tr_idx(org_df: pd.DataFrame) -> np.ndarray:
+def _get_transitions_idx(org_df: pd.DataFrame) -> np.ndarray:
     fix_df = org_df.copy()
     left_mask = get_left_mask()
     right_mask = get_right_mask()
@@ -55,7 +55,7 @@ def _divide_fixation_df(fix_df: pd.DataFrame, t: int) -> pd.DataFrame:
 def _calc_tr_nb_for_time_window(fix_df: pd.DataFrame, t: int):
     # get number transitions for time window
     divided_df = _divide_fixation_df(fix_df, t)
-    transitions = _get_tr_idx(divided_df)
+    transitions = _get_transitions_idx(divided_df)
     return transitions.shape[0]
 
 @log_ts
@@ -101,7 +101,7 @@ def _calc_metrics_all_time_window(fix_df: pd.DataFrame) -> pd.DataFrame:
 @log_ts
 def calc_mean_nb_of_fixes_for_time_window_all_trial(subj: Subject) -> np.ndarray:
     total_nb_of_fixes_all_trial = []
-    for i in subj.trials_order:
+    for i in subj.task_order:
         fix_df = subj.detect_fixations_idt(i)
         metrics = _calc_metrics_all_time_window(fix_df)
         total_nb_of_fixes = metrics["Total Number of Fixations"].to_list()

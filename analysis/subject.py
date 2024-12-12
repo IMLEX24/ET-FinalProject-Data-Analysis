@@ -37,7 +37,7 @@ class Subject:
         path = self.root / "trials_order.txt"
         with path.open(encoding="utf-8") as f:
             trials_order = json.load(f)
-        self.trials_order = [0, *trials_order]  # add the first trial
+        self.task_order = [0, *trials_order]  # add the first trial
 
         # load properties from file name
         fname = self.root.name
@@ -53,11 +53,11 @@ class Subject:
         self.all_trials = [0, 1, 2, 3, 4]
         self.valid_all()
 
-    def order_to_trial_num(self, order: int) -> int:
-        return self.trials_order[order]
+    def trial_num_to_task_id(self, order: int) -> int:
+        return self.task_order[order]
 
-    def trial_num_to_order(self, trial_num: int) -> int:
-        return self.trials_order.index(trial_num)
+    def task_id_to_trial_num(self, trial_num: int) -> int:
+        return self.task_order.index(trial_num)
 
     def valid_all(self) -> None:
         for trial_num in self.all_trials:
@@ -87,7 +87,7 @@ class Subject:
 
     def load_image(self, trial_num: int) -> Image.Image:
         # load image
-        img_id = self.trials_order[trial_num]
+        img_id = self.task_order[trial_num]
         img_path = f"./images/Trial{img_id}.png"
         img = Image.open(img_path)
         return img
