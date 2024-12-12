@@ -3,7 +3,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-import numpy as np
 import pandas as pd
 from PIL import Image
 
@@ -14,6 +13,7 @@ from .io import load_data
 from .preprocess import preprocess
 from .SMT import convert_data_into_fixations
 from .SMT import detect_fixations as detect_fixations_smt
+from .utils import log_ts
 
 AlgoType = Literal["IDT", "SMT"]
 
@@ -24,8 +24,10 @@ class Subject:
         root: Path,
         idt_consts: IDTConsts = IDTConsts(),
         smt_consts: SMTConsts = SMTConsts(),
+        valid_exp: bool = True,
     ) -> None:
         self.root = root
+        self.valid_exp = valid_exp
 
         # constants
         self.idt_consts = idt_consts
@@ -51,6 +53,12 @@ class Subject:
         self.all_trials = [0, 1, 2, 3, 4]
         self.valid_all()
 
+    def order_to_trial_num(self, order: int) -> int:
+        return self.trials_order[order]
+
+    def trial_num_to_order(self, trial_num: int) -> int:
+        return self.trials_order.index(trial_num)
+
     def valid_all(self) -> None:
         for trial_num in self.all_trials:
             self.load_data(trial_num)
@@ -59,6 +67,7 @@ class Subject:
         repr_str = f"Subject(name={self.name}, timestamp={self.timestamp}, with_timer={self.with_timer})"
         return repr_str
 
+    @log_ts
     def load_data(self, trial_num: int) -> pd.DataFrame:
         """Load and preprocesses the data.
 
@@ -83,6 +92,7 @@ class Subject:
         img = Image.open(img_path)
         return img
 
+    @log_ts
     def detect_fixations_idt(self, trial_num: int) -> pd.DataFrame:
         # detect fixations using IDT
         df = self.load_data(trial_num)
@@ -93,6 +103,7 @@ class Subject:
         )
         return fixation_df
 
+    @log_ts
     def detect_fixations_smt(self, trial_num: int) -> pd.DataFrame:
         # detect fixations using SMT
         df = self.load_data(trial_num)
@@ -160,5 +171,12 @@ class Subject:
         img = self.load_image(trial_num)
         title = self._get_title_base(trial_num)
         title = "Scanpath of " + title + f" ({algo})"
+        plot_scanpath(fix_df, img, title)
+        return fix_df
+
+    def _plot_scanpath(self, fix_df: pd.DataFrame, trial_num: int) -> pd.DataFrame:
+        img = self.load_image(trial_num)
+        title = self._get_title_base(trial_num)
+        title = "Scanpath of " + title
         plot_scanpath(fix_df, img, title)
         return fix_df

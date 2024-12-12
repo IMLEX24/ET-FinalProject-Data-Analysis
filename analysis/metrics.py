@@ -23,19 +23,20 @@ def calculate_metrics(df: pd.DataFrame) -> pd.DataFrame:
     total_scanpath_duration = df["time_end"].max() - df["time_start"].min()
 
     # 6. Prepare metrics for display
-    metrics = {
-        "Metric": [
-            "Average Fixation Duration (seconds)",
-            "Average Saccade Length (pixels)",
-            "Total Number of Fixations",
-            "Total Scanpath Duration (seconds)",
-        ],
-        "Value": [
-            f"{average_fixation_duration:.2f}",
-            f"{average_saccade_length:.2f}",
+    metrics = [
+        [
+            average_fixation_duration,
+            average_saccade_length,
             total_fixations,
-            f"{total_scanpath_duration:.2f}",
+            total_scanpath_duration,
         ],
-    }
+    ]
     metrics_df = pd.DataFrame(metrics)
+    metrics_df.columns = [
+        "Average Fixation Duration (seconds)",
+        "Average Saccade Length (pixels)",
+        "Total Number of Fixations",
+        "Total Scanpath Duration (seconds)",
+    ]
+
     return metrics_df
