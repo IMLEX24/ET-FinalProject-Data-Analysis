@@ -10,6 +10,7 @@ from .consts import SCREEN_HEIGHT, SCREEN_WIDTH
 def imshow(ax: Axes, img: Image):
     ax.imshow(img, alpha=0.7)
 
+
 def plot_trial(df: pd.DataFrame, img: Image, title: str) -> None:
     _fig, ax = plt.subplots(tight_layout=True)
 
@@ -88,7 +89,7 @@ def plot_scanpath(df_org: pd.DataFrame, img: Image, title: str) -> None:
     # df['alpha'] = (df['duration'] - min_time) / (max_time - min_time) * (alpha_range[1] - alpha_range[0]) + alpha_range[0]
 
     # Plotting Fixations
-    fig, ax = plt.subplots(tight_layout=True)
+    fig, ax = plt.subplots(tight_layout=True, figsize=(12, 8))
     # plt.figure(figsize=(12, 8))
     imshow(ax, img)
 
@@ -100,11 +101,12 @@ def plot_scanpath(df_org: pd.DataFrame, img: Image, title: str) -> None:
         label="Fixations",
         marker="o",
         s=df["size"],
-        color="purple",
-        alpha=0.4,
+        c=df["time_start"],
+        alpha=0.5,
         edgecolor="white",
-        linewidth=0.4,
+        linewidth=0.5,
     )
+    plt.colorbar(sc, ax=ax).set_label("Time (s)")
 
     # Plot saccades (lines between consecutive fixations)
     plotted_saccades = False  # Flag to add saccades label only once
@@ -142,3 +144,4 @@ def plot_scanpath(df_org: pd.DataFrame, img: Image, title: str) -> None:
     ax.legend()
     ax.grid(False)
     ax.axis("on")
+    fig.show(warn=False)
